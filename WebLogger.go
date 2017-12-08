@@ -129,8 +129,9 @@ func parseAnswer(buffer []byte) {
 		//		}
 	}
 	for i = 0; i < ansNum; i++ {
-
-		ansType = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin+1])
+		fmt.Println("ansType,blockBegin: ", blockBegin)
+		fmt.Println("ansType: ", buffer[blockBegin], ",", buffer[blockBegin])
+		ansType = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin])
 		blockBegin += 2
 		blockBegin += 6
 		resLen = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin+1])
