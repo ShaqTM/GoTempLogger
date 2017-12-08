@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -145,6 +146,7 @@ func parseAnswer(buffer []byte) {
 			fmt.Println("ansType=33: ", str)
 
 		} else if ansType == 1 {
+			fmt.Println("IP: ", buffer[blockBegin], ",", buffer[blockBegin+1], ",", buffer[blockBegin+2], ",", buffer[blockBegin+3])
 			ip = strconv.Itoa((int)(buffer[blockBegin])) + "." + strconv.Itoa((int)(buffer[blockBegin+1])) + "." + strconv.Itoa((int)(buffer[blockBegin+2])) + "." + strconv.Itoa((int)(buffer[blockBegin+3]))
 			fmt.Println("IP: ", ip)
 			return
