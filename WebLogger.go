@@ -70,8 +70,8 @@ func sendMultiCast() {
 
 func addStringToArray(str string, requestArray []byte) []byte {
 	tmpArray := []byte(str)
-	len := byte(cap(tmpArray))
-	requestArray = append(requestArray, len)
+	lenStr := byte(len(tmpArray))
+	requestArray = append(requestArray, lenStr)
 	requestArray = append(requestArray, tmpArray...)
 	return requestArray
 }
