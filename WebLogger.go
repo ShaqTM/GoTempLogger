@@ -57,7 +57,7 @@ func sendMultiCast() {
 
 	//	//type
 	requestArray = append(requestArray, 0)
-	requestArray = append(requestArray, 0)
+	requestArray = append(requestArray, 33)
 	//	//class
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
