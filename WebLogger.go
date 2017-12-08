@@ -145,8 +145,9 @@ func parseAnswer(buffer []byte) {
 			fmt.Println("ansType=33: ", str)
 
 		} else if ansType == 1 {
-			ip = string(buffer[blockBegin]) + "." + string(buffer[blockBegin+1]) + "." + string(buffer[blockBegin+2]) + "." + string(buffer[blockBegin+3])
+			ip = strconv.Itoa((int)(buffer[blockBegin])) + "." + strconv.Itoa((int)(buffer[blockBegin+1])) + "." + strconv.Itoa((int)(buffer[blockBegin+2])) + "." + strconv.Itoa((int)(buffer[blockBegin+3]))
 			fmt.Println("IP: ", ip)
+			return
 
 		} else {
 			blockBegin += resLen
