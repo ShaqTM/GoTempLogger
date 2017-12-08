@@ -62,7 +62,7 @@ func sendMultiCast() {
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
 	for {
-		fmt.Println(string(requestArray))
+		fmt.Println(requestArray)
 		conn.Write(requestArray)
 		time.Sleep(10 * time.Second)
 	}
@@ -91,12 +91,12 @@ func listenAnswer() {
 	conn.SetReadBuffer(8000)
 	for {
 		buffer := make([]byte, 8000)
-		_, _, err := conn.ReadFromUDP(buffer)
+		_, address, err := conn.ReadFromUDP(buffer)
 		if err != nil {
 			fmt.Println("ReadFromUDP failed:", err)
 			//return
 		}
-
+		fmt.Println("address: ", address.String())
 		parseAnswer(buffer)
 	}
 
