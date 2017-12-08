@@ -116,7 +116,8 @@ func parseAnswer(buffer []byte) {
 	fmt.Println("reqNum: ", reqNum)
 
 	for i = 0; i < reqNum; i++ {
-		_, blockBegin = readString(blockBegin, buffer)
+		str, blockBegin = readString(blockBegin, buffer)
+		fmt.Println("reg: ", str)
 		blockBegin += 4
 
 	}
@@ -136,8 +137,10 @@ func parseAnswer(buffer []byte) {
 		blockBegin += 2
 		if ansType == 33 {
 			blockBegin += 6
-			_, blockBegin = readString(blockBegin, buffer)
-			_, blockBegin = readString(blockBegin, buffer)
+			str, blockBegin = readString(blockBegin, buffer)
+			fmt.Println("ansType=33: ", str)
+			str, blockBegin = readString(blockBegin, buffer)
+			fmt.Println("ansType=33: ", str)
 
 		} else if ansType == 1 {
 			ip = string(buffer[blockBegin]) + "." + string(buffer[blockBegin+1]) + "." + string(buffer[blockBegin+2]) + "." + string(buffer[blockBegin+3])
