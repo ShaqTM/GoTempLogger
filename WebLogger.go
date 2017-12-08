@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 func main() {
-	//go sendMultiCast()
-	ip := externalIP()
-	for _, addr := range ip {
-		fmt.Printf(addr.String())
-	}
+	go sendMultiCast()
+	listenAnswer()
+	//	ip := externalIP()
+	//	for _, addr := range ip {
+	//		fmt.Println(addr.String())
+	//	}
 }
 
 func sendMultiCast() {
@@ -58,7 +60,12 @@ func sendMultiCast() {
 	//	//class
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
-	conn.Write(requestArray)
+	for {
+		fmt.Println(string(requestArray))
+		conn.Write(requestArray)
+		time.Sleep(10 * time.Second)
+	}
+
 }
 
 func addStringToArray(str string, requestArray []byte) []byte {
@@ -70,7 +77,95 @@ func addStringToArray(str string, requestArray []byte) []byte {
 }
 
 func listenAnswer() {
+	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
+	if err != nil {
+		fmt.Printf("Address not resolved!")
+		return
+	}
+	conn, err := net.ListenMulticastUDP("udp", nil, addr)
+	if err != nil {
+		fmt.Printf("Dial not sucsesfull!")
+		return
+	}
+	conn.SetReadBuffer(8000)
+	for {
+		buffer := make([]byte, 8000)
+		_, _, err := conn.ReadFromUDP(buffer)
+		if err != nil {
+			fmt.Println("ReadFromUDP failed:", err)
+			//return
+		}
 
+		parseAnswer(buffer)
+	}
+
+}
+
+func parseAnswer(buffer []byte) {
+	const base int = 256
+	var reqNum int = base*(int)(buffer[4]) + (int)(buffer[5])
+	var ansNum int = base*(int)(buffer[6]) + (int)(buffer[7])
+	var str string
+	var blockBegin int = 12
+	var i int
+	var ansType int
+	var resLen int
+	var ip string
+	fmt.Println("Parse answer")
+	fmt.Println("ansNum: ", ansNum)
+	fmt.Println("reqNum: ", reqNum)
+
+	for i = 0; i < reqNum; i++ {
+		_, blockBegin = readString(blockBegin, buffer)
+		blockBegin += 4
+
+	}
+	if ansNum != 0 {
+		str, blockBegin = readString(blockBegin, buffer)
+		fmt.Println("Answer string: ", str)
+		//		if str!="esp8266._http_._tcp.local"{
+		//			continue
+		//		}
+	}
+	for i = 0; i < ansNum; i++ {
+
+		ansType = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin+1])
+		blockBegin += 2
+		blockBegin += 6
+		resLen = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin+1])
+		blockBegin += 2
+		if ansType == 33 {
+			blockBegin += 6
+			_, blockBegin = readString(blockBegin, buffer)
+			_, blockBegin = readString(blockBegin, buffer)
+
+		} else if ansType == 1 {
+			ip = string(buffer[blockBegin]) + "." + string(buffer[blockBegin+1]) + "." + string(buffer[blockBegin+2]) + "." + string(buffer[blockBegin+3])
+			fmt.Println("IP: ", ip)
+
+		} else {
+			blockBegin += resLen
+		}
+
+	}
+}
+
+func readString(reqBegin int, buffer []byte) (string, int) {
+	reqStr := ""
+	var strLen int
+	var i int
+	position := reqBegin
+	for buffer[position] != 0 {
+		if reqStr != "" {
+			reqStr += "."
+		}
+		strLen = (int)(buffer[position])
+		for i = 1; i <= strLen; i++ {
+			reqStr += string(buffer[position+i])
+		}
+		position += strLen
+	}
+	return reqStr, position
 }
 
 func externalIP() []net.IP {
