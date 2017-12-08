@@ -171,6 +171,7 @@ func readString(reqBegin int, buffer []byte) (string, int) {
 		position += strLen
 		position += 1
 	}
+	position += 1
 	return reqStr, position
 }
 
