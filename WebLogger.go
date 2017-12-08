@@ -135,6 +135,7 @@ func parseAnswer(buffer []byte) {
 		blockBegin += 2
 		blockBegin += 6
 		resLen = base*(int)(buffer[blockBegin]) + (int)(buffer[blockBegin+1])
+		fmt.Println("resLen: ", resLen)
 		blockBegin += 2
 		if ansType == 33 {
 			blockBegin += 6
