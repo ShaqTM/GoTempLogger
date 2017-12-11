@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
+	//	"time"
 )
 
 func main() {
@@ -76,7 +76,7 @@ func sendMultiCast(i_addr string) {
 	//fmt.Println(requestArray)
 	conn.Write(requestArray)
 	conn.Close()
-	time.Sleep(10 * time.Second)
+	//time.Sleep(10 * time.Second)
 
 	//	}
 
