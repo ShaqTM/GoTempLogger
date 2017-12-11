@@ -10,7 +10,7 @@ import (
 func main() {
 	i_addresses := externalIP()
 	for _, i_addr := range i_addresses {
-		go sendMultiCast(i_addr)
+		sendMultiCast(i_addr)
 	}
 
 	listenAnswer()
@@ -33,11 +33,6 @@ func sendMultiCast(i_addr string) {
 		return
 	}
 
-	conn, err := net.DialUDP("udp", laddr, addr)
-	if err != nil {
-		fmt.Println("Dial not sucsesfull!", err.Error())
-		return
-	}
 	var requestArray []byte
 	//ID
 	requestArray = append(requestArray, 0)
@@ -71,12 +66,19 @@ func sendMultiCast(i_addr string) {
 	//	//class
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
-	for {
-		fmt.Println("Sending mDNS request from IP: ", i_addr)
-		//fmt.Println(requestArray)
-		conn.Write(requestArray)
-		time.Sleep(10 * time.Second)
+	//	for {
+	conn, err := net.DialUDP("udp", laddr, addr)
+	if err != nil {
+		fmt.Println("Dial not sucsesfull!", err.Error())
+		return
 	}
+	fmt.Println("Sending mDNS request from IP: ", i_addr)
+	//fmt.Println(requestArray)
+	conn.Write(requestArray)
+	conn.Close()
+	time.Sleep(10 * time.Second)
+
+	//	}
 
 }
 
