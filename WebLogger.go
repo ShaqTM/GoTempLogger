@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	//	"time"
+	"time"
 )
 
 func main() {
 	i_addresses := externalIP()
 	for _, i_addr := range i_addresses {
-		sendMultiCast(i_addr)
+		go sendMultiCast(i_addr)
 	}
 
 	listenAnswer()
@@ -67,18 +67,20 @@ func sendMultiCast(i_addr string) {
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
 	//	for {
+	fmt.Println("Sending mDNS request from IP: ", i_addr)
 	conn, err := net.DialUDP("udp", laddr, addr)
+	defer conn.Close()
 	if err != nil {
 		fmt.Println("Dial not sucsesfull!", err.Error())
 		return
 	}
-	fmt.Println("Sending mDNS request from IP: ", i_addr)
-	//fmt.Println(requestArray)
-	conn.Write(requestArray)
-	conn.Close()
-	//time.Sleep(10 * time.Second)
+	for {
+		fmt.Println(requestArray)
+		conn.Write(requestArray)
 
-	//	}
+		time.Sleep(10 * time.Second)
+
+	}
 
 }
 
@@ -97,8 +99,9 @@ func listenAnswer() {
 		return
 	}
 	conn, err := net.ListenMulticastUDP("udp", nil, addr)
+	defer conn.Close()
 	if err != nil {
-		fmt.Println("Dial not sucsesfull!", err.Error())
+		fmt.Println("Listen multicast. Dial not sucsesfull!", err.Error())
 		return
 	}
 	conn.SetReadBuffer(8000)
