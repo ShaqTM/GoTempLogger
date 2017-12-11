@@ -69,11 +69,11 @@ func sendMultiCast(i_addr string) {
 	//	for {
 	fmt.Println("Sending mDNS request from IP: ", i_addr)
 	conn, err := net.DialUDP("udp", laddr, addr)
-	defer conn.Close()
 	if err != nil {
 		fmt.Println("Dial not sucsesfull!", err.Error())
 		return
 	}
+	defer conn.Close()
 	for {
 		fmt.Println(requestArray)
 		conn.Write(requestArray)
@@ -99,11 +99,11 @@ func listenAnswer() {
 		return
 	}
 	conn, err := net.ListenMulticastUDP("udp", nil, addr)
-	defer conn.Close()
 	if err != nil {
 		fmt.Println("Listen multicast. Dial not sucsesfull!", err.Error())
 		return
 	}
+	defer conn.Close()
 	conn.SetReadBuffer(8000)
 	for {
 		buffer := make([]byte, 8000)
