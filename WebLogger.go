@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
+	//"time"
 )
 
 func main() {
 	i_addresses := externalIP()
 	for _, i_addr := range i_addresses {
-		go sendMultiCast(i_addr)
+		sendMultiCast(i_addr)
 	}
 
 	listenAnswer()
@@ -74,13 +74,13 @@ func sendMultiCast(i_addr string) {
 		return
 	}
 	defer conn.Close()
-	for {
-		fmt.Println(requestArray)
-		conn.Write(requestArray)
+	//	for {
+	//		fmt.Println(requestArray)
+	conn.Write(requestArray)
 
-		time.Sleep(10 * time.Second)
+	//		time.Sleep(10 * time.Second)
 
-	}
+	//	}
 
 }
 
