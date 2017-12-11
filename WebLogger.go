@@ -8,7 +8,11 @@ import (
 )
 
 func main() {
-	go sendMultiCast()
+	i_addresses := externalIP()
+	for _, i_addr := range i_addresses {
+		go sendMultiCast(i_addr)
+	}
+
 	listenAnswer()
 	//	ip := externalIP()
 	//	for _, addr := range ip {
@@ -16,16 +20,22 @@ func main() {
 	//	}
 }
 
-func sendMultiCast() {
+func sendMultiCast(i_addr string) {
 	//	var addr *net.UDPAddr
 	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
 	if err != nil {
 		fmt.Printf("Address not resolved!")
 		return
 	}
-	conn, err := net.DialUDP("udp", nil, addr)
+	laddr, err := net.ResolveUDPAddr("udp", i_addr+":5353")
 	if err != nil {
-		fmt.Printf("Dial not sucsesfull!")
+		fmt.Printf("Local address not resolved!")
+		return
+	}
+
+	conn, err := net.DialUDP("udp", laddr, addr)
+	if err != nil {
+		fmt.Println("Dial not sucsesfull!", err.Error())
 		return
 	}
 	var requestArray []byte
@@ -62,7 +72,8 @@ func sendMultiCast() {
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
 	for {
-		fmt.Println(requestArray)
+		fmt.Println("Sending mDNS request from IP: ", i_addr)
+		//fmt.Println(requestArray)
 		conn.Write(requestArray)
 		time.Sleep(10 * time.Second)
 	}
@@ -85,7 +96,7 @@ func listenAnswer() {
 	}
 	conn, err := net.ListenMulticastUDP("udp", nil, addr)
 	if err != nil {
-		fmt.Printf("Dial not sucsesfull!")
+		fmt.Println("Dial not sucsesfull!", err.Error())
 		return
 	}
 	conn.SetReadBuffer(8000)
@@ -178,8 +189,8 @@ func readString(reqBegin int, buffer []byte) (string, int) {
 	return reqStr, position
 }
 
-func externalIP() []net.IP {
-	var ipArray []net.IP
+func externalIP() []string {
+	var ipArray []string
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return ipArray
@@ -210,8 +221,13 @@ func externalIP() []net.IP {
 			if ip == nil {
 				continue // not an ipv4 address
 			}
-			ipArray = append(ipArray, ip)
-			fmt.Println(ip.String())
+			for _, v := range ipArray {
+				if v == ip.String() {
+					continue
+				}
+			}
+			ipArray = append(ipArray, ip.String())
+			fmt.Println("Local IP:", ip.String())
 		}
 	}
 	return ipArray
