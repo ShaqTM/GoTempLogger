@@ -1,4 +1,4 @@
 #!/bin/bash
-git remote pull logger
+git  pull logger
 go build
 ./GoTempLogger
