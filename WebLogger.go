@@ -17,7 +17,7 @@ func main() {
 	}
 
 	for {
-		timeout := time.Duration(2 * time.Second)
+		timeout := time.Duration(10 * time.Second)
 		client := http.Client{
 			Timeout: timeout,
 		}
