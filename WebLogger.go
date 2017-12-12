@@ -2,55 +2,82 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"strconv"
 	"time"
 )
 
 func main() {
-	ifaces := externalIP()
-	for _, iface := range ifaces {
-		go sendMultiCast(iface)
+	devIP := ""
+	for devIP == "" {
+		devIP = findDevice("esp8266")
+		time.Sleep(time.Second * 10)
 	}
+
 	for {
+		resp, err := http.Get("http://" + devIP + "/tempData")
+		if err != nil {
+			devIP := findDevice("esp8266")
+			if devIP != "" {
+				resp, err = http.Get("http://" + devIP + "/tempData")
+			}
+		}
+		if err == nil {
+			responseText, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				fmt.Println("Response: ", responseText)
+			}
+
+		}
+
+		time.Sleep(time.Second * 5)
 	}
-	//listenAnswer()
-	//	ip := externalIP()
-	//	for _, addr := range ip {
-	//		fmt.Println(addr.String())
-	//	}
+
 }
 
-func sendMultiCast(iface net.Interface) {
-	requestArray := buildRequest()
-	//	var addr *net.UDPAddr
+func findDevice(devName string) string {
+	requestArray := buildRequest(devName)
+	ifaces := externalIP()
+	for _, iface := range ifaces {
+		devIP := sendMultiCast(iface, requestArray)
+		if devIP != "" {
+			return devIP
+		}
+	}
+	return ""
+
+}
+
+func sendMultiCast(iface net.Interface, requestArray []byte) string {
 	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
 	if err != nil {
 		fmt.Printf("Address not resolved!", err.Error())
-		return
+		return ""
 	}
 	i_addr := getIP(iface)
 	_, err = net.ResolveUDPAddr("udp", i_addr+":5353")
 	if err != nil {
 		fmt.Printf("Local address not resolved!", err.Error())
-		return
+		return ""
 	}
 	conn, err := net.ListenMulticastUDP("udp", &iface, addr)
 	conn.SetReadBuffer(8000)
 	if err != nil {
 		fmt.Println("Listen multicast. Dial not sucsesfull!", err.Error())
-		return
+		return ""
 	}
 	defer conn.Close()
 
 	timeout := true
-	for {
+	for i := 0; i < 10; i++ {
 		if timeout {
 			fmt.Println("Sending mDNS request from IP: ", i_addr)
 			_, err := conn.WriteToUDP(requestArray, addr)
 			if err != nil {
 				fmt.Println("WriteToUDP not sucsesfull!", err.Error())
-				return
+				return ""
 			}
 		}
 		timeout = false
@@ -59,27 +86,31 @@ func sendMultiCast(iface net.Interface) {
 		err = conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 		if err != nil {
 			fmt.Println("SetReadDeadLine not sucsesfull!", err.Error())
-			return
+			return ""
 		}
-		_, address, err := conn.ReadFromUDP(buffer)
+		_, _, err := conn.ReadFromUDP(buffer)
 		if err != nil {
 			e, _ := err.(net.Error)
 			if e.Timeout() {
 				timeout = true
-				fmt.Println("ReadFromUDP failed:", err.Error())
 				continue
 			}
 			fmt.Println("ReadFromUDP failed:", err.Error())
-			return
+			return ""
 		}
-		fmt.Println("address: ", address.String())
-		parseAnswer(buffer)
+
+		devIP := parseAnswer(buffer)
+		if devIP != "" {
+			fmt.Println("Found device with IP = ", devIP)
+			return devIP
+		}
 
 	}
+	return ""
 
 }
 
-func buildRequest() []byte {
+func buildRequest(devName string) []byte {
 	var requestArray []byte
 	//ID
 	requestArray = append(requestArray, 0)
@@ -101,7 +132,7 @@ func buildRequest() []byte {
 	requestArray = append(requestArray, 0)
 	//device name
 	//writeName("esp8266._http._tcp.local", message)
-	requestArray = addStringToArray("esp8266", requestArray)
+	requestArray = addStringToArray(devName, requestArray)
 	requestArray = addStringToArray("_http", requestArray)
 	requestArray = addStringToArray("_tcp", requestArray)
 	requestArray = addStringToArray("local", requestArray)
@@ -125,33 +156,7 @@ func addStringToArray(str string, requestArray []byte) []byte {
 	return requestArray
 }
 
-func listenAnswer() {
-	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
-	if err != nil {
-		fmt.Printf("Address not resolved!")
-		return
-	}
-	conn, err := net.ListenMulticastUDP("udp", nil, addr)
-	if err != nil {
-		fmt.Println("Listen multicast. Dial not sucsesfull!", err.Error())
-		return
-	}
-	defer conn.Close()
-	conn.SetReadBuffer(8000)
-	for {
-		buffer := make([]byte, 8000)
-		_, address, err := conn.ReadFromUDP(buffer)
-		if err != nil {
-			fmt.Println("ReadFromUDP failed:", err)
-			//return
-		}
-		fmt.Println("address: ", address.String())
-		parseAnswer(buffer)
-	}
-
-}
-
-func parseAnswer(buffer []byte) {
+func parseAnswer(buffer []byte) string {
 	const base int = 256
 	var reqNum int = base*(int)(buffer[4]) + (int)(buffer[5])
 	var ansNum int = base*(int)(buffer[6]) + (int)(buffer[7])
@@ -174,9 +179,9 @@ func parseAnswer(buffer []byte) {
 	if ansNum != 0 {
 		str, blockBegin = readString(blockBegin, buffer)
 		fmt.Println("Answer string: ", str)
-		//		if str!="esp8266._http_._tcp.local"{
-		//			continue
-		//		}
+		if str != "esp8266._http_._tcp.local" {
+			return ""
+		}
 	}
 	for i = 0; i < ansNum; i++ {
 		fmt.Println("ansType,blockBegin: ", blockBegin)
@@ -198,13 +203,14 @@ func parseAnswer(buffer []byte) {
 			fmt.Println("IP: ", buffer[blockBegin], ",", buffer[blockBegin+1], ",", buffer[blockBegin+2], ",", buffer[blockBegin+3])
 			ip = strconv.Itoa((int)(buffer[blockBegin])) + "." + strconv.Itoa((int)(buffer[blockBegin+1])) + "." + strconv.Itoa((int)(buffer[blockBegin+2])) + "." + strconv.Itoa((int)(buffer[blockBegin+3]))
 			fmt.Println("IP: ", ip)
-			return
+			return ip
 
 		} else {
 			blockBegin += resLen
 		}
 
 	}
+	return ""
 }
 
 func readString(reqBegin int, buffer []byte) (string, int) {
