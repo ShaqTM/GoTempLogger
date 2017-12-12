@@ -41,7 +41,7 @@ func findDevice(devName string) string {
 	requestArray := buildRequest(devName)
 	ifaces := externalIP()
 	for _, iface := range ifaces {
-		devIP := sendMultiCast(iface, requestArray)
+		devIP := sendMultiCast(iface, requestArray, devName)
 		if devIP != "" {
 			return devIP
 		}
@@ -50,7 +50,7 @@ func findDevice(devName string) string {
 
 }
 
-func sendMultiCast(iface net.Interface, requestArray []byte) string {
+func sendMultiCast(iface net.Interface, requestArray []byte, devName string) string {
 	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
 	if err != nil {
 		fmt.Printf("Address not resolved!", err.Error())
@@ -99,7 +99,7 @@ func sendMultiCast(iface net.Interface, requestArray []byte) string {
 			return ""
 		}
 
-		devIP := parseAnswer(buffer)
+		devIP := parseAnswer(buffer, devName)
 		if devIP != "" {
 			fmt.Println("Found device with IP = ", devIP)
 			return devIP
@@ -156,7 +156,7 @@ func addStringToArray(str string, requestArray []byte) []byte {
 	return requestArray
 }
 
-func parseAnswer(buffer []byte) string {
+func parseAnswer(buffer []byte, devName string) string {
 	const base int = 256
 	var reqNum int = base*(int)(buffer[4]) + (int)(buffer[5])
 	var ansNum int = base*(int)(buffer[6]) + (int)(buffer[7])
@@ -179,7 +179,7 @@ func parseAnswer(buffer []byte) string {
 	if ansNum != 0 {
 		str, blockBegin = readString(blockBegin, buffer)
 		fmt.Println("Answer string: ", str)
-		if str != "esp8266._http_._tcp.local" {
+		if str != devName+"._http._tcp.local" {
 			return ""
 		}
 	}
