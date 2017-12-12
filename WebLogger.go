@@ -17,11 +17,15 @@ func main() {
 	}
 
 	for {
-		resp, err := http.Get("http://" + devIP + "/tempData")
+		timeout := time.Duration(2 * time.Second)
+		client := http.Client{
+			Timeout: timeout,
+		}
+		resp, err := client.Get("http://" + devIP + "/tempData")
 		if err != nil {
 			devIP := findDevice("esp8266")
 			if devIP != "" {
-				resp, err = http.Get("http://" + devIP + "/tempData")
+				resp, err = client.Get("http://" + devIP + "/tempData")
 			}
 		}
 		if err == nil {
