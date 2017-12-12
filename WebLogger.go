@@ -27,7 +27,7 @@ func main() {
 		if err == nil {
 			responseText, err := ioutil.ReadAll(resp.Body)
 			if err == nil {
-				fmt.Println("Response: ", responseText)
+				fmt.Println("Response: ", string(responseText))
 			}
 
 		}
