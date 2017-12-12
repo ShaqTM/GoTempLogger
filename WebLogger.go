@@ -13,7 +13,9 @@ func main() {
 	devIP := ""
 	for devIP == "" {
 		devIP = findDevice("esp8266")
-		time.Sleep(time.Second * 10)
+		if devIP == "" {
+			time.Sleep(time.Second * 10)
+		}
 	}
 
 	for {
