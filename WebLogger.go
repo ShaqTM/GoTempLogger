@@ -56,7 +56,7 @@ func sendMultiCast(iface net.Interface) {
 		timeout = false
 		buffer := make([]byte, 8000)
 
-		err = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		err = conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 		if err != nil {
 			fmt.Println("SetReadDeadLine not sucsesfull!", err.Error())
 			return
