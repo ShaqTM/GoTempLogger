@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -9,7 +10,19 @@ import (
 	"time"
 )
 
+const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password= dbname=templogger sslmode=disable"
+
 func main() {
+	db, err := sql.Open("postgres", DB_CONNECT_STRING)
+
+	if err != nil {
+		fmt.Printf("Database opening error -->%v\n", err)
+		panic("Database error")
+	}
+	defer db.Close()
+
+	init_database(&db)
+
 	devIP := ""
 	for devIP == "" {
 		devIP = findDevice("esp8266")
@@ -286,4 +299,31 @@ func getIP(iface net.Interface) string {
 	}
 	return ""
 
+}
+
+func init_database(pdb **sql.DB) {
+
+	db := *pdb
+
+	init_db_strings := []string{
+		"DROP SCHEMA IF EXISTS logger CASCADE;",
+		"CREATE SCHEMA IF NOT EXISTS logger;",
+		//be careful - next multiline string is quoted by backquote symbol
+		`CREATE TABLE IF NOT EXISTS logger.log_data(
+         id serial,
+         device_name varchar(10) not null,
+         parameter_name varchar(20) not null,
+         value numeric(6,2),
+         event_ctime timestamp default current_timestamp,
+         constraint id_pk primary key (id));`}
+
+	for _, qstr := range init_db_strings {
+		_, err := db.Exec(qstr)
+
+		if err != nil {
+			fmt.Printf("Database init error -->%v\n", err)
+			panic("Query error")
+		}
+	}
+	fmt.Println("Database rebuilded successfully")
 }
