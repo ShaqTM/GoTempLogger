@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password= dbname=templogger sslmode=disable"
