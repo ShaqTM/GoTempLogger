@@ -4,35 +4,82 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	//"time"
+	"time"
 )
 
 func main() {
-	i_addresses := externalIP()
-	for _, i_addr := range i_addresses {
-		sendMultiCast(i_addr)
+	ifaces := externalIP()
+	for _, iface := range ifaces {
+		go sendMultiCast(iface)
 	}
-
-	listenAnswer()
+	for {
+	}
+	//listenAnswer()
 	//	ip := externalIP()
 	//	for _, addr := range ip {
 	//		fmt.Println(addr.String())
 	//	}
 }
 
-func sendMultiCast(i_addr string) {
+func sendMultiCast(iface net.Interface) {
+	requestArray := buildRequest()
 	//	var addr *net.UDPAddr
 	addr, err := net.ResolveUDPAddr("udp", "224.0.0.251:5353")
 	if err != nil {
-		fmt.Printf("Address not resolved!")
+		fmt.Printf("Address not resolved!", err.Error())
 		return
 	}
-	laddr, err := net.ResolveUDPAddr("udp", i_addr+":5353")
+	i_addr := getIP(iface)
+	_, err = net.ResolveUDPAddr("udp", i_addr+":5353")
 	if err != nil {
-		fmt.Printf("Local address not resolved!")
+		fmt.Printf("Local address not resolved!", err.Error())
 		return
+	}
+	conn, err := net.ListenMulticastUDP("udp", &iface, addr)
+	conn.SetReadBuffer(8000)
+	if err != nil {
+		fmt.Println("Listen multicast. Dial not sucsesfull!", err.Error())
+		return
+	}
+	defer conn.Close()
+
+	timeout := true
+	for {
+		if timeout {
+			fmt.Println("Sending mDNS request from IP: ", i_addr)
+			_, err := conn.WriteToUDP(requestArray, addr)
+			if err != nil {
+				fmt.Println("WriteToUDP not sucsesfull!", err.Error())
+				return
+			}
+		}
+		timeout = false
+		buffer := make([]byte, 8000)
+
+		err = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		if err != nil {
+			fmt.Println("SetReadDeadLine not sucsesfull!", err.Error())
+			return
+		}
+		_, address, err := conn.ReadFromUDP(buffer)
+		if err != nil {
+			e, _ := err.(net.Error)
+			if e.Timeout() {
+				timeout = true
+				fmt.Println("ReadFromUDP failed:", err.Error())
+				continue
+			}
+			fmt.Println("ReadFromUDP failed:", err.Error())
+			return
+		}
+		fmt.Println("address: ", address.String())
+		parseAnswer(buffer)
+
 	}
 
+}
+
+func buildRequest() []byte {
 	var requestArray []byte
 	//ID
 	requestArray = append(requestArray, 0)
@@ -66,21 +113,7 @@ func sendMultiCast(i_addr string) {
 	//	//class
 	requestArray = append(requestArray, 0)
 	requestArray = append(requestArray, 1)
-	//	for {
-	fmt.Println("Sending mDNS request from IP: ", i_addr)
-	conn, err := net.DialUDP("udp", laddr, addr)
-	if err != nil {
-		fmt.Println("Dial not sucsesfull!", err.Error())
-		return
-	}
-	defer conn.Close()
-	//	for {
-	//		fmt.Println(requestArray)
-	conn.Write(requestArray)
-
-	//		time.Sleep(10 * time.Second)
-
-	//	}
+	return requestArray
 
 }
 
@@ -194,11 +227,11 @@ func readString(reqBegin int, buffer []byte) (string, int) {
 	return reqStr, position
 }
 
-func externalIP() []string {
-	var ipArray []string
+func externalIP() []net.Interface {
+	var ifArray []net.Interface
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return ipArray
+		return ifArray
 	}
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagUp == 0 {
@@ -207,33 +240,38 @@ func externalIP() []string {
 		if iface.Flags&net.FlagLoopback != 0 {
 			continue // loopback interface
 		}
-		addrs, err := iface.Addrs()
+		_, err := iface.Addrs()
 		if err != nil {
 			continue
 		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() {
-				continue
-			}
-			ip = ip.To4()
-			if ip == nil {
-				continue // not an ipv4 address
-			}
-			for _, v := range ipArray {
-				if v == ip.String() {
-					continue
-				}
-			}
-			ipArray = append(ipArray, ip.String())
-			fmt.Println("Local IP:", ip.String())
-		}
+		ifArray = append(ifArray, iface)
 	}
-	return ipArray
+	return ifArray
+}
+
+func getIP(iface net.Interface) string {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return ""
+	}
+	for _, addr := range addrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+		if ip == nil || ip.IsLoopback() {
+			continue
+		}
+		ip = ip.To4()
+		if ip == nil {
+			continue // not an ipv4 address
+		}
+		return ip.String()
+		fmt.Println("Local IP:", ip.String())
+	}
+	return ""
+
 }
