@@ -375,7 +375,7 @@ func insert_data(pdb **sql.DB, response []byte) {
 	var message interface{}
 	db := *pdb
 
-	err := json.Unmarshal(response, message)
+	err := json.Unmarshal(response, &message)
 	if err != nil {
 		fmt.Println("Error decoding json: ", err)
 		return
