@@ -12,7 +12,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password=Mm000000 dbname=templogger sslmode=disable"
+const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password=Mm000000 dbname=logger sslmode=disable"
 const DB_CONNECT_STRING_INIT = "host=localhost port=5432 user=postgres password=Mm000000 dbname=postgres sslmode=disable"
 
 func main() {
