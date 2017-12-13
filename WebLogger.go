@@ -356,8 +356,14 @@ func init_table(pdb **sql.DB) {
          device_name varchar(10) not null,
          parameter_name varchar(20) not null,
          value numeric(6,2),
-         event_ctime timestamp default current_timestamp,
-         constraint id_pk primary key (id));`
+         event_time_id integer,
+         constraint id_pk primary key (id));
+		CREATE TABLE IF NOT EXISTS public.log_time(
+         id serial,
+         event_time timestamp default current_timestamp,
+         constraint id_pk primary key (id));
+		
+		`
 
 	_, err = db.Exec(init_table_string)
 	if err != nil {
@@ -370,8 +376,11 @@ func init_table(pdb **sql.DB) {
 }
 
 func insert_data(pdb **sql.DB, response []byte) {
-	const INSERT_QUERY = `insert into public.log_data(device_name, parameter_name, value)
-                                  values ($1, $2, $3);`
+	const INSERT_DATA_QUERY = `insert into public.log_data(device_name, parameter_name, value,event_time_id)
+                                  values ($1, $2, $3, $4);`
+	const INSERT_TIME_QUERY = `insert into public.log_time()
+                                  values ();`
+
 	var message interface{}
 	db := *pdb
 
@@ -380,9 +389,15 @@ func insert_data(pdb **sql.DB, response []byte) {
 		fmt.Println("Error decoding json: ", err)
 		return
 	}
+	result, err := db.Exec(INSERT_TIME_QUERY)
+	if err != nil {
+		fmt.Println("Error inserting data: ", err)
+		return
+	}
+	LastInsertId, _ := result.LastInsertId()
 	m := message.(map[string]interface{})
 	for key, value := range m {
-		_, err = db.Exec(INSERT_QUERY, DEVICE_NAME, key, value)
+		_, err = db.Exec(INSERT_DATA_QUERY, DEVICE_NAME, key, value, LastInsertId)
 		if err != nil {
 			fmt.Println("Error inserting data: ", err)
 		}
