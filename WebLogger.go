@@ -378,8 +378,7 @@ func init_table(pdb **sql.DB) {
 func insert_data(pdb **sql.DB, response []byte) {
 	const INSERT_DATA_QUERY = `insert into public.log_data(device_name, parameter_name, value,event_time_id)
                                   values ($1, $2, $3, $4);`
-	const INSERT_TIME_QUERY = `insert into public.log_time()
-                                  values ();`
+	const INSERT_TIME_QUERY = `insert into public.log_time DEFAULT VALUES;`
 
 	var message interface{}
 	db := *pdb
