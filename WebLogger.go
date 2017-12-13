@@ -348,7 +348,7 @@ func init_table(pdb **sql.DB) {
 		return
 	}
 
-	init_table_string := `CREATE TABLE IF NOT EXISTS logger.log_data(
+	init_table_string := `CREATE TABLE IF NOT EXISTS public.log_data(
          id serial,
          device_name varchar(10) not null,
          parameter_name varchar(20) not null,
