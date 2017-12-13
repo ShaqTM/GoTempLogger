@@ -370,7 +370,7 @@ func init_table(pdb **sql.DB) {
 }
 
 func insert_data(pdb **sql.DB, response []byte) {
-	const INSERT_QUERY = `insert into public.logger(device_name, parameter_name, value)
+	const INSERT_QUERY = `insert into public.log_data(device_name, parameter_name, value)
                                   values ($1, $2, $3);`
 	var message interface{}
 	db := *pdb
