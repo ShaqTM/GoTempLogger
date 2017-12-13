@@ -13,8 +13,10 @@ import (
 )
 
 const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password=Mm000000 dbname=templogger sslmode=disable"
+const DB_CONNECT_STRING_INIT = "host=localhost port=5432 user=postgres password=Mm000000 dbname=postgres sslmode=disable"
 
 func main() {
+	init_database()
 	db, err := sql.Open("postgres", DB_CONNECT_STRING)
 
 	if err != nil {
@@ -23,7 +25,7 @@ func main() {
 	}
 	defer db.Close()
 
-	init_database(&db)
+	init_table(&db)
 
 	devIP := ""
 	for devIP == "" {
@@ -303,29 +305,63 @@ func getIP(iface net.Interface) string {
 
 }
 
-func init_database(pdb **sql.DB) {
+func init_database() {
+	db, err := sql.Open("postgres", DB_CONNECT_STRING_INIT)
 
+	if err != nil {
+		fmt.Println("Database opening error -->%v\n", err)
+		panic("Database error")
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false AND datname = 'logger';")
+
+	if err != nil {
+		fmt.Println("Error serching database:", err)
+		panic("Error serching database")
+	}
+
+	for rows.Next() {
+		fmt.Println("Database logger found")
+		return
+	}
+	_, err = db.Exec("CREATE DATABASE logger WITH OWNER postgres;")
+	if err != nil {
+		fmt.Println("Error creating database:", err)
+		panic("Error creating database")
+	}
+	fmt.Println("Database created successfully")
+}
+
+func init_table(pdb **sql.DB) {
 	db := *pdb
 
-	init_db_strings := []string{
-		"DROP SCHEMA IF EXISTS logger CASCADE;",
-		"CREATE SCHEMA IF NOT EXISTS logger;",
-		//be careful - next multiline string is quoted by backquote symbol
-		`CREATE TABLE IF NOT EXISTS logger.log_data(
+	rows, err := db.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'logger'")
+
+	if err != nil {
+		fmt.Println("Error serching table:", err)
+		panic("Error serching database")
+	}
+
+	for rows.Next() {
+		fmt.Println("Table logger found")
+		return
+	}
+
+	init_table_string := `CREATE TABLE IF NOT EXISTS logger.log_data(
          id serial,
          device_name varchar(10) not null,
          parameter_name varchar(20) not null,
          value numeric(6,2),
          event_ctime timestamp default current_timestamp,
-         constraint id_pk primary key (id));`}
+         constraint id_pk primary key (id));`
 
-	for _, qstr := range init_db_strings {
-		_, err := db.Exec(qstr)
-
-		if err != nil {
-			fmt.Printf("Database init error -->%v\n", err)
-			panic("Query error")
-		}
+	_, err = db.Exec(init_table_string)
+	if err != nil {
+		fmt.Println("Table create error", err)
+		panic("Table create error")
 	}
-	fmt.Println("Database rebuilded successfully")
+
+	fmt.Println("Table created successfully")
+
 }
