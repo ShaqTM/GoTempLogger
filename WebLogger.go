@@ -357,11 +357,11 @@ func init_table(pdb **sql.DB) {
          parameter_name varchar(20) not null,
          value numeric(6,2),
          event_time_id integer,
-         constraint id_pk primary key (id));
+         constraint id_data primary key (id));
 		CREATE TABLE IF NOT EXISTS public.log_time(
          id serial,
          event_time timestamp default current_timestamp,
-         constraint id_pk primary key (id));
+         constraint id_time primary key (id));
 		
 		`
 
