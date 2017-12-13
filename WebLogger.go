@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,6 +15,7 @@ import (
 
 const DB_CONNECT_STRING = "host=localhost port=5432 user=postgres password=Mm000000 dbname=logger sslmode=disable"
 const DB_CONNECT_STRING_INIT = "host=localhost port=5432 user=postgres password=Mm000000 dbname=postgres sslmode=disable"
+const DEVICE_NAME = "esp8266"
 
 func main() {
 	init_database()
@@ -29,7 +31,7 @@ func main() {
 
 	devIP := ""
 	for devIP == "" {
-		devIP = findDevice("esp8266")
+		devIP = findDevice(DEVICE_NAME)
 		if devIP == "" {
 			time.Sleep(time.Second * 10)
 		}
@@ -42,7 +44,7 @@ func main() {
 		}
 		resp, err := client.Get("http://" + devIP + "/tempData")
 		if err != nil {
-			devIP := findDevice("esp8266")
+			devIP := findDevice(DEVICE_NAME)
 			if devIP != "" {
 				resp, err = client.Get("http://" + devIP + "/tempData")
 			}
@@ -51,6 +53,7 @@ func main() {
 			responseText, err := ioutil.ReadAll(resp.Body)
 			if err == nil {
 				fmt.Println("Response: ", string(responseText))
+				insert_data(&db, responseText)
 			}
 
 		}
@@ -363,5 +366,26 @@ func init_table(pdb **sql.DB) {
 	}
 
 	fmt.Println("Table created successfully")
+
+}
+
+func insert_data(pdb **sql.DB, response []byte) {
+	const INSERT_QUERY = `insert into public.logger(device_name, parameter_name, value)
+                                  values ($1, $2, $3);`
+	var message interface{}
+	db := *pdb
+
+	err := json.Unmarshal(response, message)
+	if err != nil {
+		fmt.Println("Error decoding json: ", err)
+		return
+	}
+	m := message.(map[string]interface{})
+	for key, value := range m {
+		_, err = db.Exec(INSERT_QUERY, DEVICE_NAME, key, value)
+		if err != nil {
+			fmt.Println("Error inserting data: ", err)
+		}
+	}
 
 }
