@@ -394,40 +394,41 @@ func get_devices(pdb **sql.DB) []string {
 			fmt.Println("Error getting device name: ", err)
 			continue
 		}
-		fmt.Println(dev_name)
 		device_list = append(device_list, dev_name)
 	}
 	return device_list
 
 }
 func readFromDevice(device_name string, pdb **sql.DB) {
-	devIP := ""
-	for devIP == "" {
-		devIP = findDevice(device_name)
-		if devIP == "" {
-			time.Sleep(time.Second * 10)
+	for {
+		devIP := ""
+		for devIP == "" {
+			devIP = findDevice(device_name)
+			if devIP == "" {
+				time.Sleep(time.Second * 10)
+			}
 		}
-	}
 
-	timeout := time.Duration(10 * time.Second)
-	client := http.Client{
-		Timeout: timeout,
-	}
-	resp, err := client.Get("http://" + devIP + "/tempData")
-	if err != nil {
-		devIP := findDevice(device_name)
-		if devIP != "" {
-			resp, err = client.Get("http://" + devIP + "/tempData")
+		timeout := time.Duration(10 * time.Second)
+		client := http.Client{
+			Timeout: timeout,
 		}
-	}
-	if err == nil {
-		responseText, err := ioutil.ReadAll(resp.Body)
+		resp, err := client.Get("http://" + devIP + "/tempData")
+		if err != nil {
+			devIP := findDevice(device_name)
+			if devIP != "" {
+				resp, err = client.Get("http://" + devIP + "/tempData")
+			}
+		}
 		if err == nil {
-			fmt.Println("Response: ", string(responseText))
-			insert_data(pdb, responseText, device_name)
+			responseText, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				fmt.Println("Response: ", string(responseText))
+				insert_data(pdb, responseText, device_name)
+			}
 		}
+		time.Sleep(time.Second * 5)
 	}
-	time.Sleep(time.Second * 5)
 }
 
 const rootHTML = `
@@ -454,7 +455,7 @@ func handleRoot(pdb **sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		options := ""
 		device_list := get_devices(pdb)
-		for device_name, _ := range device_list {
+		for _, device_name := range device_list {
 			options = options + fmt.Sprintf(optionHTML, device_name, device_name)
 		}
 		fmt.Println(options)
