@@ -28,38 +28,10 @@ func main() {
 	defer db.Close()
 
 	init_table(&db)
+	go readFromDevice(DEVICE_NAME, &db)
 
-	devIP := ""
-	for devIP == "" {
-		devIP = findDevice(DEVICE_NAME)
-		if devIP == "" {
-			time.Sleep(time.Second * 10)
-		}
-	}
-
-	for {
-		timeout := time.Duration(10 * time.Second)
-		client := http.Client{
-			Timeout: timeout,
-		}
-		resp, err := client.Get("http://" + devIP + "/tempData")
-		if err != nil {
-			devIP := findDevice(DEVICE_NAME)
-			if devIP != "" {
-				resp, err = client.Get("http://" + devIP + "/tempData")
-			}
-		}
-		if err == nil {
-			responseText, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				fmt.Println("Response: ", string(responseText))
-				insert_data(&db, responseText)
-			}
-
-		}
-
-		time.Sleep(time.Second * 5)
-	}
+	http.Handle("/", handleRoot(&db))
+	http.ListenAndServe(":5000", nil)
 
 }
 
@@ -375,7 +347,7 @@ func init_table(pdb **sql.DB) {
 
 }
 
-func insert_data(pdb **sql.DB, response []byte) {
+func insert_data(pdb **sql.DB, response []byte, device_name string) {
 	const INSERT_DATA_QUERY = `insert into public.log_data(device_name, parameter_name, value,event_time_id)
                                   values ($1, $2, $3, $4);`
 	const INSERT_TIME_QUERY = `insert into public.log_time DEFAULT VALUES RETURNING id;`
@@ -396,10 +368,92 @@ func insert_data(pdb **sql.DB, response []byte) {
 	}
 	m := message.(map[string]interface{})
 	for key, value := range m {
-		_, err = db.Exec(INSERT_DATA_QUERY, DEVICE_NAME, key, value, LastInsertId)
+		_, err = db.Exec(INSERT_DATA_QUERY, device_name, key, value, LastInsertId)
 		if err != nil {
 			fmt.Println("Error inserting data: ", err)
 		}
 	}
 
+}
+
+func get_devices(pdb **sql.DB) []string {
+	var device_list []string
+	db := *pdb
+
+	rows, err := db.Query("SELECT DISTINCT device_name FROM log_data")
+	if err != nil {
+		fmt.Println("Error query device names: ", err)
+		return device_list
+	}
+	dev_name := ""
+	for rows.Next() {
+		err = rows.Scan(&dev_name)
+		if err != nil {
+			fmt.Println("Error getting device name: ", err)
+			continue
+		}
+		device_list = append(device_list, dev_name)
+	}
+	return device_list
+
+}
+func readFromDevice(device_name string, pdb **sql.DB) {
+	devIP := ""
+	for devIP == "" {
+		devIP = findDevice(device_name)
+		if devIP == "" {
+			time.Sleep(time.Second * 10)
+		}
+	}
+
+	timeout := time.Duration(10 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	resp, err := client.Get("http://" + devIP + "/tempData")
+	if err != nil {
+		devIP := findDevice(device_name)
+		if devIP != "" {
+			resp, err = client.Get("http://" + devIP + "/tempData")
+		}
+	}
+	if err == nil {
+		responseText, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			fmt.Println("Response: ", string(responseText))
+			insert_data(pdb, responseText, device_name)
+		}
+	}
+	time.Sleep(time.Second * 5)
+}
+
+const rootHTML = `
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple Go Web App</title>
+  </head>
+  <body>
+	<p>
+		<label for="device_list">Выберите устройство:</label>
+		<select id="device_list" name="device_list">
+			%s
+		</select>
+	</p>
+	</body>
+</html>`
+
+const optionHTML = `
+<option value="%s">%s</option>`
+
+func handleRoot(pdb **sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		options := ""
+		device_list := get_devices(pdb)
+		for device_name, _ := range device_list {
+			options = options + fmt.Sprintf(optionHTML, device_name, device_name)
+		}
+		fmt.Fprintf(w, rootHTML, options)
+	})
 }
