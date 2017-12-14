@@ -32,7 +32,9 @@ func main() {
 
 	http.Handle("/", handleRoot(&db))
 	http.ListenAndServe(":5000", nil)
+	for {
 
+	}
 }
 
 func findDevice(devName string) string {
@@ -392,6 +394,7 @@ func get_devices(pdb **sql.DB) []string {
 			fmt.Println("Error getting device name: ", err)
 			continue
 		}
+		fmt.Println(dev_name)
 		device_list = append(device_list, dev_name)
 	}
 	return device_list
