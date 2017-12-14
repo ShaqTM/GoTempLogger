@@ -378,7 +378,7 @@ func init_table(pdb **sql.DB) {
 func insert_data(pdb **sql.DB, response []byte) {
 	const INSERT_DATA_QUERY = `insert into public.log_data(device_name, parameter_name, value,event_time_id)
                                   values ($1, $2, $3, $4);`
-	const INSERT_TIME_QUERY = `insert into public.log_time DEFAULT VALUES;`
+	const INSERT_TIME_QUERY = `insert into public.log_time DEFAULT VALUES RETURNING id;`
 
 	var message interface{}
 	db := *pdb
@@ -388,12 +388,12 @@ func insert_data(pdb **sql.DB, response []byte) {
 		fmt.Println("Error decoding json: ", err)
 		return
 	}
-	result, err := db.Exec(INSERT_TIME_QUERY)
+	LastInsertId := 0
+	err = db.QueryRow(INSERT_TIME_QUERY).Scan(&LastInsertId)
 	if err != nil {
-		fmt.Println("Error inserting data: ", err)
+		fmt.Println("Error inserting time data: ", err)
 		return
 	}
-	LastInsertId, _ := result.LastInsertId()
 	m := message.(map[string]interface{})
 	for key, value := range m {
 		_, err = db.Exec(INSERT_DATA_QUERY, DEVICE_NAME, key, value, LastInsertId)
