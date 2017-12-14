@@ -454,6 +454,7 @@ func handleRoot(pdb **sql.DB) http.Handler {
 		for device_name, _ := range device_list {
 			options = options + fmt.Sprintf(optionHTML, device_name, device_name)
 		}
+		fmt.Println(options)
 		fmt.Fprintf(w, rootHTML, options)
 	})
 }
