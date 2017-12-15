@@ -405,18 +405,21 @@ func get_devices(pdb **sql.DB) []string {
 func get_last_data(pdb **sql.DB, device_name string) string {
 	db := *pdb
 	id := 0
-	err := db.QueryRow(fmt.Sprintf(`SELECT log_time.id 
+	queryText := fmt.Sprintf(`SELECT log_time.id 
 	FROM log_time 
 	INNER JOIN log_data ON log_data.event_time_id = log_time.id
 	AND log_data.device_name="%s"
 	ORDER BY lod_time.id DESC
-	LIMIT 1`, device_name)).Scan(&id)
+	LIMIT 1`, device_name)
+	fmt.Println(queryText)
+	err := db.QueryRow(queryText).Scan(&id)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return ""
 	}
-
-	rows, err := db.Query(fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%n"), id)
+	queryText = fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%n", id)
+	fmt.Println(queryText)
+	rows, err := db.Query(queryText)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return ""
