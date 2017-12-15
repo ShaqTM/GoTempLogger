@@ -502,7 +502,7 @@ const rootHTML = `
 		var device_list = document.getElementById("device_list")
 		device_list.onchange = refreshData		
 		var refresh = document.getElementById("refresh")
-		refresh.onClick = refreshData		
+		refresh.onclick = refreshData		
 		
 		</script>		
 	</p>
