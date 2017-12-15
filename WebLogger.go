@@ -408,7 +408,7 @@ func get_last_data(pdb **sql.DB, device_name string) string {
 	queryText := fmt.Sprintf(`SELECT log_time.id 
 	FROM log_time 
 	INNER JOIN log_data ON log_data.event_time_id = log_time.id
-	AND log_data.device_name="%s"
+	AND log_data.device_name='%s'
 	ORDER BY lod_time.id DESC
 	LIMIT 1`, device_name)
 	fmt.Println(queryText)
