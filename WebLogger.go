@@ -417,7 +417,7 @@ func get_last_data(pdb **sql.DB, device_name string) string {
 		fmt.Println("Error query last data: ", err)
 		return ""
 	}
-	queryText = fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%n", id)
+	queryText = fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%d", id)
 	fmt.Println(queryText)
 	rows, err := db.Query(queryText)
 	if err != nil {
