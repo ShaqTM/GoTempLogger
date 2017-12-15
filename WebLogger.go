@@ -479,6 +479,7 @@ const rootHTML = `
 	<p>
 		<label for="device_list">Выберите устройство:</label>
 		<select id="device_list" name="device_list">
+			<option value=""></option>
 			%s
 		</select>
 		<script>
