@@ -405,14 +405,17 @@ func get_devices(pdb **sql.DB) []string {
 func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 	db := *pdb
 	id := 0
+	whereText := ""
+	if datetime != "" {
+		whereText = fmt.Sprintf("WHERE log_time.event_time<='%s'", datetime)
+	}
 	queryText := fmt.Sprintf(`SELECT log_time.id 
 	FROM log_time 
 	INNER JOIN log_data ON log_data.event_time_id = log_time.id
 	AND log_data.device_name='%s'
-	WHERE log_time.event_time<='%s'
-		OR '%s'=''
+	%s
 	ORDER BY log_time.id DESC
-	LIMIT 1`, device_name, datetime, datetime)
+	LIMIT 1`, device_name, whereText)
 	fmt.Println(queryText)
 	err := db.QueryRow(queryText).Scan(&id)
 	if err != nil {
