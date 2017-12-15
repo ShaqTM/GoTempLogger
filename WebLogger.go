@@ -431,15 +431,17 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 	}
 	const labelString = `<p><label>&s: %f</label></p>`
 	var parameter_value float32
+	parameter_name := ""
 	returnString := ""
 	for rows.Next() {
-		parameter_name := ""
 
 		err = rows.Scan(&parameter_name, &parameter_value)
 		if err != nil {
 			fmt.Println("Error query last data: ", err)
 			continue
 		}
+		fmt.Println(parameter_name)
+		fmt.Println(parameter_value)
 		returnString = returnString + fmt.Sprintf(labelString, parameter_name, parameter_value)
 	}
 	return returnString
