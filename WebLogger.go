@@ -439,7 +439,7 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 			fmt.Println("Error query last data: ", err)
 			continue
 		}
-		returnString = returnString + fmt.Sprintf(returnString, parameter_name, parameter_value)
+		returnString = returnString + fmt.Sprintf(labelString, parameter_name, parameter_value)
 	}
 	return returnString
 
