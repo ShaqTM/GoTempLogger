@@ -31,6 +31,8 @@ func main() {
 	go readFromDevice(DEVICE_NAME, &db)
 
 	http.Handle("/", handleRoot(&db))
+	http.Handle("/getLastData", handlegetLastData(&db))
+
 	http.ListenAndServe(":5000", nil)
 	for {
 
@@ -399,9 +401,44 @@ func get_devices(pdb **sql.DB) []string {
 	return device_list
 
 }
+
+func get_last_data(pdb **sql.DB, device_name string) string {
+	db := *pdb
+	id := 0
+	err := db.QueryRow(fmt.Sprintf(`SELECT log_time.id 
+	FROM log_time 
+	INNER JOIN log_data ON log_data.event_time_id = log_time.id
+	AND log_data.device_name="%s"
+	ORDER BY lod_time.id DESC
+	LIMIT 1`, device_name)).Scan(&id)
+	if err != nil {
+		fmt.Println("Error query last data: ", err)
+		return ""
+	}
+
+	rows, err := db.Query(fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%n"), id)
+	if err != nil {
+		fmt.Println("Error query last data: ", err)
+		return ""
+	}
+	returnString := ""
+	for rows.Next() {
+		parameter_name := ""
+		parameter_value := ""
+		err = rows.Scan(&parameter_name, &parameter_value)
+		if err != nil {
+			fmt.Println("Error query last data: ", err)
+			continue
+		}
+		returnString = returnString + parameter_name + "=" + parameter_value + ";"
+	}
+	return returnString
+
+}
+
 func readFromDevice(device_name string, pdb **sql.DB) {
+	devIP := ""
 	for {
-		devIP := ""
 		for devIP == "" {
 			devIP = findDevice(device_name)
 			if devIP == "" {
@@ -444,7 +481,27 @@ const rootHTML = `
 		<select id="device_list" name="device_list">
 			%s
 		</select>
+		<script>
+		var device_list = document.getElementById("device_list")
+		device_list.onchange = function() {
+			var data_block = document.getElementById("data_block")
+		    var request = new XMLHttpRequest();
+    		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value,true);
+    		request.addEventListener('readystatechange', function() {
+      			if ((request.readyState==4) && (request.status==200)) {
+        			data_block.innerHTML = request.responseText;
+      			}
+    		}); 
+			request.send();			
+		};
+		
+		</script>		
 	</p>
+	<p>
+		<div id="data_block"
+		</div>
+	</p>
+
 	</body>
 </html>`
 
@@ -460,5 +517,14 @@ func handleRoot(pdb **sql.DB) http.Handler {
 		}
 		fmt.Println(options)
 		fmt.Fprintf(w, rootHTML, options)
+	})
+}
+
+func handlegetLastData(pdb **sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		device_name := r.URL.Query().Get("device")
+		data := get_last_data(pdb, device_name)
+		fmt.Println(data)
+		fmt.Fprintf(w, data)
 	})
 }
