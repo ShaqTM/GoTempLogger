@@ -485,9 +485,11 @@ const rootHTML = `
 			<option value=""></option>
 			%s
 		</select>
+		<input type="button" onclick="refreshData()" value="Обновить"/>
 		<script>
 		var device_list = document.getElementById("device_list")
-		device_list.onchange = function() {
+		device_list.onchange = refreshData
+		ver refreshData = function() {
 			var data_block = document.getElementById("data_block")
 		    var request = new XMLHttpRequest();
     		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value,true);
@@ -498,7 +500,6 @@ const rootHTML = `
     		}); 
 			request.send();			
 		};
-		
 		</script>		
 	</p>
 	<p>
