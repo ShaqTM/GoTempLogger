@@ -422,13 +422,14 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 		fmt.Println("Error query last data: ", err)
 		return ""
 	}
-	queryText = fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%d", id)
+	queryText = fmt.Sprintf("SELECT parameter_name,value FROM log_data WHERE event_time_id=%d ORDER BY parameter_name", id)
 	fmt.Println(queryText)
 	rows, err := db.Query(queryText)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return ""
 	}
+	const labelString = `<p><label>&s: %s</label></p>`
 	returnString := ""
 	for rows.Next() {
 		parameter_name := ""
@@ -438,7 +439,7 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 			fmt.Println("Error query last data: ", err)
 			continue
 		}
-		returnString = returnString + parameter_name + "=" + parameter_value + ";"
+		returnString = returnString + fmt.Sprintf(returnString, parameter_name, parameter_value)
 	}
 	return returnString
 
@@ -490,7 +491,11 @@ const rootHTML = `
 			<option value=""></option>
 			%s
 		</select>
+	</p>
+	<p>
 		<input type="button" id="refresh" value="Обновить"/>
+		</p>
+	<p>
 		<input type="datetime-local" id="datetime">
 		<script>
 		
