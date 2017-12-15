@@ -429,7 +429,7 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 		fmt.Println("Error query last data: ", err)
 		return ""
 	}
-	const labelString = `<p><label>&s: %s</label></p>`
+	const labelString = `<p><label>&s: %d</label></p>`
 	returnString := ""
 	for rows.Next() {
 		parameter_name := ""
