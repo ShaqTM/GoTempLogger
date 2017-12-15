@@ -402,15 +402,17 @@ func get_devices(pdb **sql.DB) []string {
 
 }
 
-func get_last_data(pdb **sql.DB, device_name string) string {
+func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 	db := *pdb
 	id := 0
 	queryText := fmt.Sprintf(`SELECT log_time.id 
 	FROM log_time 
 	INNER JOIN log_data ON log_data.event_time_id = log_time.id
 	AND log_data.device_name='%s'
+	WHERE log_time.event_time<='%s'
+		OR '%s'=''
 	ORDER BY log_time.id DESC
-	LIMIT 1`, device_name)
+	LIMIT 1`, device_name, datetime, datetime)
 	fmt.Println(queryText)
 	err := db.QueryRow(queryText).Scan(&id)
 	if err != nil {
@@ -486,12 +488,13 @@ const rootHTML = `
 			%s
 		</select>
 		<input type="button" id="refresh" value="Обновить"/>
+		<input type="datetime-local" id="datetime">
 		<script>
 		
 		var refreshData = function() {
 			var data_block = document.getElementById("data_block")
 		    var request = new XMLHttpRequest();
-    		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value,true);
+    		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value+'&datetime='+datetime.value,true);
     		request.addEventListener('readystatechange', function() {
       			if ((request.readyState==4) && (request.status==200)) {
         			data_block.innerHTML = request.responseText;
@@ -503,7 +506,7 @@ const rootHTML = `
 		device_list.onchange = refreshData		
 		var refresh = document.getElementById("refresh")
 		refresh.onclick = refreshData		
-		
+		var datetime = document.getElementById("datetime")
 		</script>		
 	</p>
 	<p>
@@ -532,7 +535,9 @@ func handleRoot(pdb **sql.DB) http.Handler {
 func handlegetLastData(pdb **sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		device_name := r.URL.Query().Get("device")
-		data := get_last_data(pdb, device_name)
+		datetime := r.URL.Query().Get("datetime")
+		fmt.Println(datetime)
+		data := get_last_data(pdb, device_name, datetime)
 		fmt.Println(data)
 		fmt.Fprintf(w, data)
 	})
