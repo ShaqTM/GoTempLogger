@@ -32,6 +32,9 @@ func main() {
 
 	http.Handle("/", handleRoot(&db))
 	http.Handle("/getLastData", handlegetLastData(&db))
+	http.Handle("/chart", handlegetLastData(&db))
+	http.Handle("/getLastData", handleChart(&db))
+	http.Handle("/getDataArray", handlegetDataArray(&db))
 
 	http.ListenAndServe(":5000", nil)
 	for {
@@ -448,6 +451,106 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 
 }
 
+type RespNode struct {
+	time string
+	data []float32
+}
+type RespStruct struct {
+	parameters []string
+	data       []RespNode
+}
+
+func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime2 string) string {
+	db := *pdb
+	id := 0
+	whereText := "WHERE True "
+	if datetime1 != "" {
+		whereText = whereText + fmt.Sprintf(" AND log_time.event_time>='%s'", datetime1)
+	}
+	if datetime2 != "" {
+		whereText = whereText + fmt.Sprintf(" AND log_time.event_time<='%s'", datetime2)
+	}
+
+	queryText := fmt.Sprintf(`SELECT DISTINCT
+		log_data.parameter_name
+	FROM log_time 
+	INNER JOIN log_data ON log_data.event_time_id = log_time.id
+	AND log_data.device_name='%s'
+	%s
+	ORDER BY log_data.parameter_name`, device_name, whereText)
+	rows, err := db.Query(queryText)
+	if err != nil {
+		fmt.Println("Error query parameter list: ", err)
+		return ""
+	}
+	parameter_name := ""
+	parameters := make(map[string]int)
+	var parametersArray []string
+	paramsNumber := 0
+	for rows.Next() {
+		err = rows.Scan(&parameter_name)
+		if err != nil {
+			fmt.Println("Error query parameter name: ", err)
+			return ""
+		}
+		parameters[parameter_name] = paramsNumber
+		parametersArray = append(parametersArray, parameter_name)
+	}
+
+	fmt.Println(queryText)
+	err = db.QueryRow(queryText).Scan(&id)
+	if err != nil {
+		fmt.Println("Error query last data: ", err)
+		return ""
+	}
+	queryText = fmt.Sprintf(`SELECT log_time.event_time,
+		log_data.parameter_name,
+		log_data.value
+	FROM log_time 
+	INNER JOIN log_data ON log_data.event_time_id = log_time.id
+	AND log_data.device_name='%s'
+	%s
+	ORDER BY log_time.id ASC`, device_name, whereText)
+	rows, err = db.Query(queryText)
+	if err != nil {
+		fmt.Println("Error query data array: ", err)
+		return ""
+	}
+	var parameter_value float32
+	parameter_name = ""
+	prev_event_time := ""
+	event_time := ""
+
+	data := make([]float32, paramsNumber)
+	for i := 0; i < paramsNumber; i++ {
+		data[i] = 0
+	}
+
+	var nodeArray []RespNode
+	for rows.Next() {
+		err = rows.Scan(&event_time, &parameter_name, &parameter_value)
+		if err != nil {
+			fmt.Println("Error query last data: ", err)
+			continue
+		}
+		if event_time != prev_event_time {
+			node := RespNode{data: data, time: prev_event_time}
+			nodeArray = append(nodeArray, node)
+			data = make([]float32, paramsNumber)
+			for i := 0; i < paramsNumber; i++ {
+				data[i] = 0
+			}
+
+		}
+		prev_event_time = event_time
+		data[parameters[parameter_name]] = parameter_value
+	}
+	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
+	resJSON, _ := json.Marshal(respStruct)
+	return string(resJSON)
+
+}
+
 func readFromDevice(device_name string, pdb **sql.DB) {
 	devIP := ""
 	for {
@@ -524,6 +627,60 @@ const rootHTML = `
 		<div id="data_block"
 		</div>
 	</p>
+		<form action="chart">
+    		<input type="submit" value="Show chart" />
+		</form>		
+	</body>
+</html>`
+
+const chartHTML = `
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple Go Web App</title>
+  </head>
+  <body>
+	<p>
+		<label for="device_list">Выберите устройство:</label>
+		<select id="device_list" name="device_list">
+			<option value=""></option>
+			%s
+		</select>
+	</p>
+	<p>
+		<input type="button" id="refresh" value="Обновить"/>
+		</p>
+	<p>
+		<label for="datetime1">Период с:</label>
+		<input type="datetime-local" id="datetime1">
+		<label for="datetime2">по:</label>
+		<input type="datetime-local" id="datetime2">
+		<script>
+		
+		var refreshData = function() {
+			var data_block = document.getElementById("data_block")
+		    var request = new XMLHttpRequest();
+    		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+datetime1.value+'&datetime2='+datetime2.value,true);
+    		request.addEventListener('readystatechange', function() {
+      			if ((request.readyState==4) && (request.status==200)) {
+        			data_block.innerHTML = request.responseText;
+      			}
+    		}); 
+			request.send();			
+		};
+		var device_list = document.getElementById("device_list")
+		//device_list.onchange = refreshData		
+		var refresh = document.getElementById("refresh")
+		refresh.onclick = refreshData		
+		var datetime1 = document.getElementById("datetime1")
+		var datetime1 = document.getElementById("datetime2")
+		</script>		
+	</p>
+	<p>
+		<div id="data_block"
+		</div>
+	</p>
 
 	</body>
 </html>`
@@ -551,5 +708,28 @@ func handlegetLastData(pdb **sql.DB) http.Handler {
 		data := get_last_data(pdb, device_name, datetime)
 		fmt.Println(data)
 		fmt.Fprintf(w, data)
+	})
+}
+
+func handlegetDataArray(pdb **sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		device_name := r.URL.Query().Get("device")
+		datetime1 := r.URL.Query().Get("datetime1")
+		datetime2 := r.URL.Query().Get("datetime2")
+
+		data := get_data_array(pdb, device_name, datetime1, datetime2)
+
+		fmt.Fprintf(w, data)
+	})
+}
+func handleChart(pdb **sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		options := ""
+		device_list := get_devices(pdb)
+		for _, device_name := range device_list {
+			options = options + fmt.Sprintf(chartHTML, device_name, device_name)
+		}
+		fmt.Println(options)
+		fmt.Fprintf(w, rootHTML, options)
 	})
 }
