@@ -451,12 +451,12 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 }
 
 type RespNode struct {
-	time string    `json:"time"`
-	data []float32 `json:"data"`
+	Time string
+	Data []float32
 }
 type RespStruct struct {
-	parameters []string   `json:"parameters"`
-	data       []RespNode `json:"data"`
+	Parameters []string
+	Data       []RespNode
 }
 
 func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime2 string) string {
@@ -521,7 +521,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		data[i] = 0
 	}
 
-	//	var nodeArray []RespNode
+	var nodeArray []RespNode
 	for rows.Next() {
 		err = rows.Scan(&event_time, &parameter_name, &parameter_value)
 		if err != nil {
@@ -529,8 +529,8 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 			continue
 		}
 		if event_time != prev_event_time {
-			//			node := RespNode{data: data, time: prev_event_time}
-			//			nodeArray = append(nodeArray, node)
+			node := RespNode{Data: data, Time: prev_event_time}
+			nodeArray = append(nodeArray, node)
 			data = make([]float32, paramsNumber)
 			for i := 0; i < paramsNumber; i++ {
 				data[i] = 0
@@ -540,11 +540,11 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		prev_event_time = event_time
 		data[parameters[parameter_name]] = parameter_value
 	}
-	node := RespNode{data: data, time: prev_event_time}
-	//nodeArray = append(nodeArray, node)
-	fmt.Println("%s; %f; %f; %f; %f", node.time, node.data[0], node.data[1], node.data[2], node.data[3])
-	//	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
-	resJSON, err := json.Marshal(node.data) //respStruct)
+	node := RespNode{Data: data, Time: prev_event_time}
+	nodeArray = append(nodeArray, node)
+	//fmt.Println("%s; %f; %f; %f; %f", node.time, node.data[0], node.data[1], node.data[2], node.data[3])
+	respStruct := &RespStruct{Parameters: parametersArray, Data: nodeArray}
+	resJSON, err := json.Marshal(respStruct)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return "Error query last data: " + err.Error()
