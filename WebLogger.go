@@ -521,7 +521,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		data[i] = 0
 	}
 
-	var nodeArray []RespNode
+	//	var nodeArray []RespNode
 	for rows.Next() {
 		err = rows.Scan(&event_time, &parameter_name, &parameter_value)
 		if err != nil {
@@ -529,8 +529,8 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 			continue
 		}
 		if event_time != prev_event_time {
-			node := RespNode{data: data, time: prev_event_time}
-			nodeArray = append(nodeArray, node)
+			//			node := RespNode{data: data, time: prev_event_time}
+			//			nodeArray = append(nodeArray, node)
 			data = make([]float32, paramsNumber)
 			for i := 0; i < paramsNumber; i++ {
 				data[i] = 0
@@ -541,10 +541,10 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		data[parameters[parameter_name]] = parameter_value
 	}
 	node := RespNode{data: data, time: prev_event_time}
-	nodeArray = append(nodeArray, node)
+	//nodeArray = append(nodeArray, node)
 
 	//	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
-	resJSON, err := json.Marshal(nodeArray) //respStruct)
+	resJSON, err := json.Marshal(node) //respStruct)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return "Error query last data: " + err.Error()
