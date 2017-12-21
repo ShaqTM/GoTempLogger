@@ -461,7 +461,7 @@ type RespStruct struct {
 
 func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime2 string) string {
 	db := *pdb
-	id := 0
+
 	whereText := "WHERE True "
 	if datetime1 != "" {
 		whereText = whereText + fmt.Sprintf(" AND log_time.event_time>='%s'", datetime1)
@@ -496,12 +496,6 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		parametersArray = append(parametersArray, parameter_name)
 	}
 
-	fmt.Println(queryText)
-	err = db.QueryRow(queryText).Scan(&id)
-	if err != nil {
-		fmt.Println("Error query last data: ", err)
-		return ""
-	}
 	queryText = fmt.Sprintf(`SELECT log_time.event_time,
 		log_data.parameter_name,
 		log_data.value
@@ -726,9 +720,9 @@ func handleChart(pdb **sql.DB) http.Handler {
 		options := ""
 		device_list := get_devices(pdb)
 		for _, device_name := range device_list {
-			options = options + fmt.Sprintf(chartHTML, device_name, device_name)
+			options = options + fmt.Sprintf(optionHTML, device_name, device_name)
 		}
 		fmt.Println(options)
-		fmt.Fprintf(w, rootHTML, options)
+		fmt.Fprintf(w, chartHTML, options)
 	})
 }
