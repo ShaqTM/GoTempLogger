@@ -451,12 +451,12 @@ func get_last_data(pdb **sql.DB, device_name string, datetime string) string {
 }
 
 type RespNode struct {
-	time string
-	data []float32
+	time string    `json:"time"`
+	data []float32 `json:"data"`
 }
 type RespStruct struct {
-	parameters []string
-	data       []RespNode
+	parameters []string   `json:"parameters"`
+	data       []RespNode `json:"data"`
 }
 
 func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime2 string) string {
