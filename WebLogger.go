@@ -493,6 +493,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 			return ""
 		}
 		parameters[parameter_name] = paramsNumber
+		fmt.Println(parameter_name)
 		parametersArray = append(parametersArray, parameter_name)
 	}
 
@@ -536,6 +537,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 
 		}
 		prev_event_time = event_time
+		fmt.Println(parameter_name)
 		data[parameters[parameter_name]] = parameter_value
 	}
 	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
