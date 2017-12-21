@@ -493,6 +493,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 			return ""
 		}
 		parameters[parameter_name] = paramsNumber
+		paramsNumber++
 		fmt.Println(parameter_name)
 		parametersArray = append(parametersArray, parameter_name)
 	}
