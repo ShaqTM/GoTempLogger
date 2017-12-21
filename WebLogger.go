@@ -540,8 +540,11 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		prev_event_time = event_time
 		data[parameters[parameter_name]] = parameter_value
 	}
-	respStruct := &RespStruct{parameters: parametersArray, data: nodeArray}
-	resJSON, err := json.Marshal(respStruct)
+	node := RespNode{data: data, time: prev_event_time}
+	nodeArray = append(nodeArray, node)
+
+	//	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
+	resJSON, err := json.Marshal(nodeArray) //respStruct)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
 		return "Error query last data: " + err.Error()
