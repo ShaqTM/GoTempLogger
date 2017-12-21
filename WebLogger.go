@@ -32,8 +32,7 @@ func main() {
 
 	http.Handle("/", handleRoot(&db))
 	http.Handle("/getLastData", handlegetLastData(&db))
-	http.Handle("/chart", handlegetLastData(&db))
-	http.Handle("/getLastData", handleChart(&db))
+	http.Handle("/chart", handleChart(&db))
 	http.Handle("/getDataArray", handlegetDataArray(&db))
 
 	http.ListenAndServe(":5000", nil)
