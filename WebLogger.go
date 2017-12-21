@@ -540,7 +540,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		prev_event_time = event_time
 		data[parameters[parameter_name]] = parameter_value
 	}
-	node := RespNode{data: data, time: prev_event_time}
+	node := &RespNode{data: data, time: prev_event_time}
 	//nodeArray = append(nodeArray, node)
 	fmt.Println("%s; %f; %f; %f; %f", node.time, node.data[0], node.data[1], node.data[2], node.data[3])
 	//	respStruct := RespStruct{parameters: parametersArray, data: nodeArray}
