@@ -455,8 +455,9 @@ type RespNode struct {
 	Data []float32
 }
 type RespStruct struct {
-	Parameters []string
-	Data       []RespNode
+	Parameters       []string
+	ParametersNumber int
+	Data             []RespNode
 }
 
 func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime2 string) string {
@@ -545,7 +546,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 	node := RespNode{Data: data, Time: prev_event_time}
 	nodeArray = append(nodeArray, node)
 	//fmt.Println("%s; %f; %f; %f; %f", node.time, node.data[0], node.data[1], node.data[2], node.data[3])
-	respStruct := &RespStruct{Parameters: parametersArray, Data: nodeArray}
+	respStruct := &RespStruct{Parameters: parametersArray, ParametersNumber: paramsNumber, Data: nodeArray}
 	resJSON, err := json.Marshal(respStruct)
 	if err != nil {
 		fmt.Println("Error query last data: ", err)
@@ -660,6 +661,35 @@ const chartHTML = `
   <head>
     <meta charset="utf-8">
     <title>Simple Go Web App</title>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      function drawChart(resp) {
+		var data = new google.visualization.DataTable();
+		data.addColumn('datetime', 'Time');
+		for (var i=0; i<resp.paramsNumber;i++){
+			data.addColumn('number', resp.Parameters[i]);
+		}
+		for (var counter = 0;counter<=data.Data.length;counter++){
+			data.addRows();
+			data.setCell(counter,0,resp.Data[counter].Time);
+			for (var i=0; i<resp.paramsNumber;i++){
+				data.setCell(counter,i+0,resp.Data[counter].Data[i]);
+			}
+			
+		}
+        var options = {
+          title: 'Company Performance',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+	
   </head>
   <body>
 	<p>
@@ -707,7 +737,7 @@ const chartHTML = `
     		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+datetime1+'&datetime2='+datetime2,true);
     		request.addEventListener('readystatechange', function() {
       			if ((request.readyState==4) && (request.status==200)) {
-        			data_block.innerHTML = request.responseText;
+        			drawChart(JSON.parse(request.responseText));
       			}
     		}); 
 			request.send();			
@@ -723,8 +753,7 @@ const chartHTML = `
 		</script>		
 	</p>
 	<p>
-		<div id="data_block"
-		</div>
+		<div id="curve_chart" style="width: 900px; height: 500px"></div>
 	</p>
 
 	</body>
