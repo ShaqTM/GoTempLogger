@@ -607,13 +607,14 @@ const rootHTML = `
 		<input type="button" id="refresh" value="Обновить"/>
 		</p>
 	<p>
-		<input type="datetime-local" id="datetime">
+		<input type="date" id="date">
+		<input type="time" id="time">
 		<script>
 		
 		var refreshData = function() {
 			var data_block = document.getElementById("data_block")
 		    var request = new XMLHttpRequest();
-    		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value+'&datetime='+datetime.value,true);
+    		request.open('GET','getLastData?device='+device_list.options[device_list.selectedIndex].value+'&datetime='+date.value+"T"+time.value,true);
     		request.addEventListener('readystatechange', function() {
       			if ((request.readyState==4) && (request.status==200)) {
         			data_block.innerHTML = request.responseText;
@@ -625,7 +626,11 @@ const rootHTML = `
 		device_list.onchange = refreshData		
 		var refresh = document.getElementById("refresh")
 		refresh.onclick = refreshData		
-		var datetime = document.getElementById("datetime")
+		var date = document.getElementById("date")
+		var time = document.getElementById("time")
+		date.addEventListener("input",refreshTata)
+		time.addEventListener("input",refreshTata)
+		
 		</script>		
 	</p>
 	<p>
