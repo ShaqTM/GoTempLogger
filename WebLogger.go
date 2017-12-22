@@ -670,7 +670,7 @@ const chartHTML = `
 		for (var i=0; i<resp.paramsNumber;i++){
 			data.addColumn('number', resp.Parameters[i]);
 		}
-		for (var counter = 0;counter<=data.Data.length;counter++){
+		for (var counter = 0;counter<=resp.Data.length;counter++){
 			data.addRows();
 			data.setCell(counter,0,resp.Data[counter].Time);
 			for (var i=0; i<resp.paramsNumber;i++){
