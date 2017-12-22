@@ -679,7 +679,7 @@ const chartHTML = `
 		var refresh = document.getElementById("refresh")
 		refresh.onclick = refreshData		
 		var datetime1 = document.getElementById("datetime1")
-		var datetime1 = document.getElementById("datetime2")
+		var datetime2 = document.getElementById("datetime2")
 		</script>		
 	</p>
 	<p>
@@ -721,7 +721,7 @@ func handlegetDataArray(pdb **sql.DB) http.Handler {
 		device_name := r.URL.Query().Get("device")
 		datetime1 := r.URL.Query().Get("datetime1")
 		datetime2 := r.URL.Query().Get("datetime2")
-
+		fmt.Println(datetime1)
 		data := get_data_array(pdb, device_name, datetime1, datetime2)
 
 		fmt.Fprintf(w, data)
