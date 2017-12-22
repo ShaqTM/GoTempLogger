@@ -673,7 +673,7 @@ const chartHTML = `
 		}
 		for (var counter = 0;counter<=resp.Data.length;counter++){
 			data.addRow();
-			data.setCell(counter,0,resp.Data[counter].Time);
+			data.setCell(counter,0,new Date(resp.Data[counter].Time));
 			for (var i=0; i<resp.paramsNumber;i++){
 				data.setCell(counter,i+0,resp.Data[counter].Data[i]);
 			}
