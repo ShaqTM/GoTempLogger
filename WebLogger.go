@@ -531,7 +531,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 			fmt.Println("Error query last data: ", err)
 			continue
 		}
-		if event_time != prev_event_time {
+		if event_time != prev_event_time && prev_event_time != "" {
 			node := RespNode{Data: data, Time: prev_event_time}
 			nodeArray = append(nodeArray, node)
 			data = make([]float32, paramsNumber)
