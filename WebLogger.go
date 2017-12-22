@@ -470,6 +470,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 		whereText = whereText + fmt.Sprintf(" AND log_time.event_time<='%s'", datetime2)
 	}
 
+	fmt.Println(whereText)
 	queryText := fmt.Sprintf(`SELECT DISTINCT
 		log_data.parameter_name
 	FROM log_time 
