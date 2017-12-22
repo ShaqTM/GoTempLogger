@@ -668,13 +668,13 @@ const chartHTML = `
       function drawChart(resp) {
 		var data = new google.visualization.DataTable();
 		data.addColumn('datetime', 'Time');
-		for (var i=0; i<resp.ParamsNumber;i++){
+		for (var i=0; i<resp.ParametersNumber;i++){
 			data.addColumn('number', resp.Parameters[i]);
 		}
 		for (var counter = 0;counter<resp.Data.length;counter++){
 			data.addRow();
 			data.setCell(counter,0,new Date(resp.Data[counter].Time));
-			for (var i=0; i<resp.ParamsNumber;i++){
+			for (var i=0; i<resp.ParametersNumber;i++){
 				data.setCell(counter,i+1,resp.Data[counter].Data[i]);
 			}
 			
