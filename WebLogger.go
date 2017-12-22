@@ -695,7 +695,7 @@ const chartHTML = `
               minutes: {format: ['HH:mm a Z', ':mm']}
             }
           }
-        }
+        },
   
           legend: { position: 'bottom' }
         };
