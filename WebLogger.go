@@ -681,6 +681,22 @@ const chartHTML = `
 		}
         var options = {
           title: 'Log',
+        hAxis: {
+          gridlines: {
+            count: -1,
+            units: {
+              days: {format: ['MMM dd']},
+              hours: {format: ['HH:mm', 'ha']},
+            }
+          },
+          minorGridlines: {
+            units: {
+              hours: {format: ['hh:mm:ss a', 'ha']},
+              minutes: {format: ['HH:mm a Z', ':mm']}
+            }
+          }
+        }
+  
           legend: { position: 'bottom' }
         };
 
