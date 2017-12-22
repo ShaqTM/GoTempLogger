@@ -671,7 +671,7 @@ const chartHTML = `
 		for (var i=0; i<resp.paramsNumber;i++){
 			data.addColumn('number', resp.Parameters[i]);
 		}
-		for (var counter = 0;counter<=resp.Data.length;counter++){
+		for (var counter = 0;counter<resp.Data.length;counter++){
 			data.addRow();
 			data.setCell(counter,0,new Date(resp.Data[counter].Time));
 			for (var i=0; i<resp.paramsNumber;i++){
