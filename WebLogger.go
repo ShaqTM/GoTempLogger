@@ -680,8 +680,7 @@ const chartHTML = `
 			
 		}
         var options = {
-          title: 'Company Performance',
-          curveType: 'function',
+          title: 'Log',
           legend: { position: 'bottom' }
         };
 
