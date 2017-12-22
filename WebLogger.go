@@ -506,6 +506,7 @@ func get_data_array(pdb **sql.DB, device_name string, datetime1 string, datetime
 	AND log_data.device_name='%s'
 	%s
 	ORDER BY log_time.id ASC`, device_name, whereText)
+	fmt.Println(queryText)
 	rows, err = db.Query(queryText)
 	if err != nil {
 		fmt.Println("Error query data array: ", err)
