@@ -684,7 +684,7 @@ const chartHTML = `
           legend: { position: 'bottom' }
         };
 
-        var chart = new google.visualization.Line(document.getElementById('curve_chart'));
+        var chart = new google.charts.Line(document.getElementById('curve_chart'));
         chart.draw(data, options);
       }
     </script>
