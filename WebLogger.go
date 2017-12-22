@@ -607,6 +607,7 @@ const rootHTML = `
 		<input type="button" id="refresh" value="Обновить"/>
 		</p>
 	<p>
+		<label for="date">Введите дату и время:</label>
 		<input type="date" id="date">
 		<input type="time" id="time">
 		<script>
@@ -628,8 +629,8 @@ const rootHTML = `
 		refresh.onclick = refreshData		
 		var date = document.getElementById("date")
 		var time = document.getElementById("time")
-		date.addEventListener("input",refreshTata)
-		time.addEventListener("input",refreshTata)
+		date.addEventListener("input",refreshData)
+		time.addEventListener("input",refreshData)
 		
 		</script>		
 	</p>
@@ -663,15 +664,17 @@ const chartHTML = `
 		</p>
 	<p>
 		<label for="datetime1">Период с:</label>
-		<input type="datetime-local" id="datetime1">
+		<input type="date" id="date1">
+		<input type="time" id="time1">
 		<label for="datetime2">по:</label>
-		<input type="datetime-local" id="datetime2">
+		<input type="date" id="date2">
+		<input type="time" id="time2">
 		<script>
 		
 		var refreshData = function() {
 			var data_block = document.getElementById("data_block")
 		    var request = new XMLHttpRequest();
-    		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+datetime1.value+'&datetime2='+datetime2.value,true);
+    		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+date1.value+"T"+time1.value+'&datetime2='+date2.value+"T"+time2.value,true);
     		request.addEventListener('readystatechange', function() {
       			if ((request.readyState==4) && (request.status==200)) {
         			data_block.innerHTML = request.responseText;
@@ -683,8 +686,10 @@ const chartHTML = `
 		//device_list.onchange = refreshData		
 		var refresh = document.getElementById("refresh")
 		refresh.onclick = refreshData		
-		var datetime1 = document.getElementById("datetime1")
-		var datetime2 = document.getElementById("datetime2")
+		var date1 = document.getElementById("date1")
+		var time1 = document.getElementById("time1")
+		var date2 = document.getElementById("date2")
+		var time2 = document.getElementById("time2")
 		</script>		
 	</p>
 	<p>
