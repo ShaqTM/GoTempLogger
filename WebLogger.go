@@ -684,8 +684,27 @@ const chartHTML = `
 		var refreshData = function() {
 			var data_block = document.getElementById("data_block")
 		    var request = new XMLHttpRequest();
-			var datetime1
-    		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+date1.value+"T"+time1.value+'&datetime2='+date2.value+"T"+time2.value,true);
+			var datetime1 = "";
+			if (date1.value!=""){
+				datetime1 = date1.value+"T";
+				if (time1.value!=""){
+					datetime1 = datetime1+time1.value;
+				}
+				else{
+					datetime1 = datetime1+"00:00:00";
+				}
+			} 
+			var datetime2 = "";
+			if (date2.value!=""){
+				datetime2 = date2.value+"T";
+				if (time2.value!=""){
+					datetime2 = datetime2+time2.value;
+				}
+				else{
+					datetime2 = datetime2+"00:00:00";
+				}
+			} 
+    		request.open('GET','getDataArray?device='+device_list.options[device_list.selectedIndex].value+'&datetime1='+datetime1+'&datetime2='+datetime2,true);
     		request.addEventListener('readystatechange', function() {
       			if ((request.readyState==4) && (request.status==200)) {
         			data_block.innerHTML = request.responseText;
