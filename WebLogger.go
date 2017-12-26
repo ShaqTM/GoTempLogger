@@ -39,6 +39,7 @@ func main() {
 		fmt.Println("error:", err)
 	}
 	for _, device := range configuration.Devices {
+		fmt.Println("device name: '" + device.Name + "'")
 		go device.ReadFromDevice(mdb)
 	}
 
