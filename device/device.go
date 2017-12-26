@@ -151,6 +151,7 @@ func (device Device) buildRequest() []byte {
 	requestArray = append(requestArray, 0)
 	//device name
 	//writeName("esp8266._http._tcp.local", message)
+	fmt.Println("device name: '" + device.Name + "'")
 	requestArray = addStringToArray(device.Name, requestArray)
 	requestArray = addStringToArray("_http", requestArray)
 	requestArray = addStringToArray("_tcp", requestArray)
