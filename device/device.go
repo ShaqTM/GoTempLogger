@@ -120,7 +120,7 @@ func (device Device) sendMultiCast(iface net.Interface, requestArray []byte) Dev
 
 		device := device.parseAnswer(buffer)
 		if device.Ip != "" {
-			//fmt.Println("Found device with IP = ", device.Ip)
+			fmt.Println("Found device with IP = ", device.Ip)
 			return device
 		}
 
