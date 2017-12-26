@@ -197,7 +197,7 @@ func (device Device) parseAnswer(buffer []byte) Device {
 	}
 	if ansNum != 0 {
 		str, blockBegin = readString(blockBegin, buffer)
-		fmt.Println("Answer string: ", str)
+		fmt.Println("Answer string: '", str+"'")
 		if str != device.Name+"._http._tcp.local" {
 			return device
 		}
