@@ -47,6 +47,7 @@ func main() {
 	http.Handle("/getLastData", handlegetLastData(mdb))
 	http.Handle("/chart", handleChart(mdb))
 	http.Handle("/getDataArray", handlegetDataArray(mdb))
+	http.Handle("/getDeviceList", handleDeviceList(mdb))
 
 	http.ListenAndServe(":5000", nil)
 	for {
@@ -312,5 +313,14 @@ func handleChart(mdb mdatabase.MDB) http.Handler {
 		}
 		fmt.Println(options)
 		fmt.Fprintf(w, chartHTML, options)
+	})
+}
+
+func handleDeviceList(mdb mdatabase.MDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		device_list := mdb.Get_devices()
+		data, _ := json.Marshal(device_list)
+		fmt.Fprintf(w, string(data))
 	})
 }
