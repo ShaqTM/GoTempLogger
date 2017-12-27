@@ -48,6 +48,7 @@ func main() {
 	http.Handle("/chart", handleChart(mdb))
 	http.Handle("/getDataArray", handlegetDataArray(mdb))
 	http.Handle("/getDeviceList", handleDeviceList(mdb))
+	http.Handle("/getParameters", handleGetParameters(mdb))
 
 	http.ListenAndServe(":5000", nil)
 	for {
@@ -298,7 +299,6 @@ func handlegetDataArray(mdb mdatabase.MDB) http.Handler {
 		device_name := r.URL.Query().Get("device")
 		datetime1 := r.URL.Query().Get("datetime1")
 		datetime2 := r.URL.Query().Get("datetime2")
-		fmt.Println(datetime1)
 		data := mdb.Get_data_array(device_name, datetime1, datetime2)
 
 		fmt.Fprintf(w, data)
@@ -327,5 +327,14 @@ func handleDeviceList(mdb mdatabase.MDB) http.Handler {
 		}
 		data, _ := json.Marshal(devStruct)
 		fmt.Fprintf(w, string(data))
+	})
+}
+func handleGetParameters(mdb mdatabase.MDB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		device_name := r.URL.Query().Get("device")
+		datetime1 := r.URL.Query().Get("datetime1")
+		datetime2 := r.URL.Query().Get("datetime2")
+		data := mdb.Get_parameters(device_name, datetime1, datetime2)
+		fmt.Fprintf(w, data)
 	})
 }

@@ -255,3 +255,41 @@ func (mdb MDB) Get_data_array(device_name string, datetime1 string, datetime2 st
 	return string(resJSON)
 
 }
+
+func (mdb MDB) Get_parameters(device_name string, datetime1 string, datetime2 string) string {
+	db := *mdb.Pdb
+
+	whereText := "WHERE True "
+	if datetime1 != "" {
+		whereText = whereText + fmt.Sprintf(" AND log_time.event_time>='%s'", datetime1)
+	}
+	if datetime2 != "" {
+		whereText = whereText + fmt.Sprintf(" AND log_time.event_time<='%s'", datetime2)
+	}
+
+	queryText := fmt.Sprintf(`SELECT DISTINCT
+		log_data.parameter_name
+	FROM log_time 
+	INNER JOIN log_data ON log_data.event_time_id = log_time.id
+	AND log_data.device_name='%s'
+	%s
+	ORDER BY log_data.parameter_name`, device_name, whereText)
+	rows, err := db.Query(queryText)
+	if err != nil {
+		fmt.Println("Error query parameter list: ", err)
+		return ""
+	}
+	parameter_name := ""
+	var parametersArray []string
+	for rows.Next() {
+		err = rows.Scan(&parameter_name)
+		if err != nil {
+			fmt.Println("Error query parameter name: ", err)
+			return ""
+		}
+		parametersArray = append(parametersArray, parameter_name)
+	}
+	resJSON, err := json.Marshal(parametersArray)
+	return string(resJSON)
+
+}
