@@ -318,14 +318,8 @@ func handleChart(mdb mdatabase.MDB) http.Handler {
 
 func handleDeviceList(mdb mdatabase.MDB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type devList struct {
-			Devices []string
-		}
 		device_list := mdb.Get_devices()
-		devStruct := devList{
-			Devices: device_list,
-		}
-		data, _ := json.Marshal(devStruct)
+		data, _ := json.Marshal(device_list)
 		fmt.Fprintf(w, string(data))
 	})
 }
